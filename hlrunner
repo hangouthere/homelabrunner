@@ -1,0 +1,40 @@
+#!/bin/sh
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+export SCRIPT_DIR
+
+if [ -n "$HLR_DATA_DIR" ]; then
+    DATA_DIR="$HLR_DATA_DIR"
+elif [ -n "$XDG_DATA_HOME" ]; then
+    DATA_DIR="$XDG_DATA_HOME/hlrunner"
+else
+    DATA_DIR="$SCRIPT_DIR"
+fi
+export DATA_DIR
+LIB_DIR="$DATA_DIR/lib"
+export LIB_DIR
+
+if [ -z "$1" ]; then
+    . "$LIB_DIR/help.sh"
+    printHelp
+    exit 1
+fi
+
+command=$1
+shift
+
+case "$command" in
+    init|list|up|down|build|logs|pull|upgrade|ps|psp|upall|downall|pullall|upgradeall)
+        if [ -f "$LIB_DIR/commands/$command.sh" ]; then
+            . "$LIB_DIR/commands/$command.sh" "$@"
+        else
+            echo "Error: Command '$command' not found"
+            exit 1
+        fi
+        ;;
+    *)
+        echo "Error: Unknown command '$command'"
+        echo "Run 'hlrunner' with no arguments to see available commands"
+        exit 1
+        ;;
+esac
