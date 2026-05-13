@@ -79,6 +79,16 @@ ln -s ~/.local/share/hlrunner/hlrunner ~/.local/bin/hlrunner
 
 Use `HLR_DATA_DIR` if you want to store data in a non-standard location.
 
+### Bash/ZSH Completion
+
+```
+# Needed for ZSH support
+autoload -U +X bashcompinit
+bashcompinit
+# Source the completions script
+source /opt/hlrunner/_completions
+```
+
 ## Directory Structure
 
 ```

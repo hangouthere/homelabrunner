@@ -1,0 +1,82 @@
+# hlrunner completion (bash + zsh compatible, no external deps)
+
+# -----------------------------
+# zsh compatibility layer
+# -----------------------------
+if [[ -n "$ZSH_VERSION" ]]; then
+    autoload -U +X bashcompinit
+    bashcompinit
+fi
+
+# -----------------------------
+# stack discovery
+# -----------------------------
+_hlrunner_stacks() {
+    local stacks_path="${HLR_STACKS_PATH:-.}"
+    local stacks_dir
+    local -a stacks
+
+    stacks_dir="$(realpath "$stacks_path" 2>/dev/null || echo "$stacks_path")"
+    [[ -d "$stacks_dir" ]] || return
+
+    # safe globbing (bash/zsh compatible)
+    if [[ -n "$BASH_VERSION" ]]; then
+        shopt -s nullglob
+    else
+        setopt local_options null_glob
+    fi
+
+    for dir in "$stacks_dir"/*/; do
+        [[ -d "$dir" ]] || continue
+
+        local name="${dir%/}"
+        name="${name##*/}"
+
+        # only include real compose stacks
+        for f in compose.yaml compose.yml docker-compose.yaml docker-compose.yml; do
+            if [[ -f "$dir$f" ]]; then
+                stacks+=("$name")
+                break
+            fi
+        done
+    done
+
+    COMPREPLY=( $(compgen -W "${stacks[*]}" -- "$cur") )
+}
+
+# -----------------------------
+# main completion function
+# -----------------------------
+_hlrunner() {
+    local cur prev
+
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    local commands="
+        init list up down build logs
+        pull upgrade ps psp
+        upall downall pullall upgradeall
+    "
+
+    case "$COMP_CWORD" in
+        1)
+            COMPREPLY=( $(compgen -W "$commands" -- "$cur") )
+            ;;
+
+        2)
+            case "$prev" in
+                up|down|build|logs|pull|upgrade)
+                    _hlrunner_stacks
+                    ;;
+            esac
+            ;;
+    esac
+}
+
+# -----------------------------
+# register completion
+# -----------------------------
+complete -F _hlrunner hlrunner
+complete -F _hlrunner hlr
